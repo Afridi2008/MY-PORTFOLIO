@@ -576,6 +576,7 @@ export default function App() {
   const [contactForm, setContactForm] = useState({ name: '', email: '', project: '' });
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formSuccess, setFormSuccess] = useState(false);
+  const [formError, setFormError] = useState(false);
 
   // Monitor Scroll for Active Section
   useEffect(() => {
@@ -628,17 +629,41 @@ export default function App() {
     };
   }, []);
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!contactForm.name || !contactForm.email) return;
 
     setFormSubmitting(true);
-    setTimeout(() => {
+    setFormSuccess(false);
+    setFormError(false);
+
+    try {
+      const response = await fetch('https://formsubmit.co/ajax/afridimohamed9741@gmail.com', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: contactForm.name,
+          email: contactForm.email,
+          project: contactForm.project,
+          _subject: 'New portfolio contact form message',
+          _replyto: contactForm.email,
+          _captcha: 'false'
+        })
+      });
+
+      if (!response.ok) throw new Error('Form submission failed');
+
       setFormSubmitting(false);
       setFormSuccess(true);
       setContactForm({ name: '', email: '', project: '' });
       setTimeout(() => setFormSuccess(false), 5000);
-    }, 700);
+    } catch (error) {
+      setFormSubmitting(false);
+      setFormError(true);
+    }
   };
 
   const scrollToSection = (id) => {
@@ -1237,7 +1262,12 @@ export default function App() {
               <form className="contact-form" onSubmit={handleFormSubmit}>
                 {formSuccess && (
                   <div className="form-success-toast">
-                    Thank you! Your message has been received. I'll get back to you shortly.
+                    Thank you! Your message has been sent. I'll get back to you shortly.
+                  </div>
+                )}
+                {formError && (
+                  <div className="form-success-toast">
+                    Something went wrong. Please email me directly at afridimohamed9741@gmail.com.
                   </div>
                 )}
 
@@ -1246,6 +1276,7 @@ export default function App() {
                   <input 
                     id="form-name"
                     type="text" 
+                    name="name"
                     className="form-input" 
                     placeholder="Your Name" 
                     required
@@ -1259,6 +1290,7 @@ export default function App() {
                   <input 
                     id="form-email"
                     type="email" 
+                    name="email"
                     className="form-input" 
                     placeholder="your.email@example.com" 
                     required
@@ -1271,6 +1303,7 @@ export default function App() {
                   <label htmlFor="form-project" className="form-label">Your Project / Inquiry</label>
                   <textarea 
                     id="form-project"
+                    name="project"
                     className="form-textarea" 
                     placeholder="Tell me about your project, timeline, or requirement..."
                     rows={4}
